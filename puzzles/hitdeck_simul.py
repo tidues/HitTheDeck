@@ -62,19 +62,16 @@ def exphands(req, rounds=20000):
     return sum(iters)/(len(iters) * 1.0)
 
         
-
+reqkeys = {
+        'c': ([7, 9, 12, 45, 61, 78], 2),
+        'r': ([3, 6, 20, 34], 2),
+        'e': ([5, 11, 19], 2),
+        'l': ([1, 4, 8, 10], 1)
+        }
 req = {}
-clst = [7,9,12,45,61,78]
-rlst = [3,6,20,34]
-elst = [5,11,19]
-llst = [1,4,8,10]
-for c in clst:
-    req['c', c] = 2
-for r in rlst:
-    req['r', r] = 2
-for e in elst:
-    req['e', e] = 2
-for l in llst:
-    req['l', l] = 1
+for key in reqkeys:
+    vals, cond  = reqkeys[key]
+    for val in vals:
+        req[key, val] = cond
 
-print(exphands(req,rounds=10000)) 
+print(exphands(req,rounds=100000)) 

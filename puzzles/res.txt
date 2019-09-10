@@ -1,0 +1,6 @@
+instances,simulation(100,000),Markov_chain,direct_computation
+[(c7,1)],26.972,26.974,26.974
+[(c7,2)],53.562,53.566,-
+[(c7,2),(r6,1)],59.586,59.701,-
+question,315.048,,
+
