@@ -234,10 +234,10 @@ reqkeys = {
         'e': ([5, 11, 19], 2),
         'l': ([1, 4, 8, 10], 1)
         }
-reqkeys = {
-        'c': ([7], 2),
-        'r': ([6], 1)
-        }
+#reqkeys = {
+#        'c': ([7], 2),
+#        'r': ([6], 1)
+#        }
 reqs = {}
 for key in reqkeys:
     vals, req = reqkeys[key]

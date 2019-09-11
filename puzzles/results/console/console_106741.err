@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "./hitdeck_exact.py", line 264, in <module>
+    states, trans_prob = markov_chain_gen(reqs, prob_vec_c, prob_vec_r)
+  File "./hitdeck_exact.py", line 194, in markov_chain_gen
+    prog.count()
+  File "/user/yanboguo/projects/HitTheDeck/puzzles/progress.py", line 29, in count
+    print(self.label, 'progress:\t%0.4f%%\ttime:\t%0.1fs' % (self.cnt/self.tot * 100, end - self.time0))
+OSError: [Errno 116] Stale file handle
+/var/spool/slurmd/job106741/slurm_script: line 40: echo: write error: Stale file handle
