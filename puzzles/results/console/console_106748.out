@@ -1,0 +1,6 @@
+SLURM_JOB_NODELIST=cpn-u24-09
+SLURM_NNODES=1
+SLURMTMPDIR=/scratch/106748
+working directory = /user/yanboguo/projects/HitTheDeck/puzzles
+NPROCS=32
+generating markov chain...
