@@ -220,8 +220,8 @@ def solve_psg(states, trans_prob, reqlen):
     a = np.array(a)
     b = np.array(b)
     x, info = lin.bicgstab(a, b)
-    print(x)
-    print(info)
+    # print(x)
+    print('solve info: ', info)
     # x = np.linalg.solve(a,b)
     v0 = tuple([0] * reqlen)
     return x[key2idx[v0]]
@@ -234,10 +234,10 @@ reqkeys = {
         'e': ([5, 11, 19], 2),
         'l': ([1, 4, 8, 10], 1)
         }
-#reqkeys = {
-#        'c': ([7], 2),
-#        'r': ([6], 1)
-#        }
+reqkeys = {
+        'c': ([7], 2),
+        'r': ([6], 1)
+        }
 reqs = {}
 for key in reqkeys:
     vals, req = reqkeys[key]
