@@ -95,12 +95,15 @@ def cartesian_ls(ls2dim):
     if len(ls2dim) == 1:
         tmp = ls2dim[0]
         return list(map(lambda x: tuple(cartesian_term_convert(x)), tmp))
+    elif len(ls2dim) == 2:
+        return cartesian_bi(ls2dim[0], ls2dim[1])
     else:
-        ls2 = ls2dim.pop()
-        ls1 = ls2dim.pop()
-        ls = cartesian_bi(ls1, ls2)
-        ls2dim.append(ls)
-        return cartesian_ls(ls2dim)
+        sp = int(len(ls2dim) / 2.0) + 1
+        ls1 = ls2dim[:sp]
+        ls2 = ls2dim[sp:]
+        lsa = cartesian_ls(ls1)
+        lsb = cartesian_ls(ls2)
+        return cartesian_bi(lsa, lsb)
 
 
 # convert cartesian term
@@ -111,7 +114,6 @@ def cartesian_term_convert(val):
     else:
         res = [val]
     return res
-
 
 ######################################################
 # end: help functions
@@ -316,7 +318,7 @@ reqkeys = {
         'l': ([1, 4, 8, 10], 1)
         }
 #reqkeys = {
-#        'c': ([7], 2),
+#        'c': ([7], 1),
 #        'r': ([6], 1)
 #        }
 reqs = {}
