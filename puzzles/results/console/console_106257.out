@@ -1,0 +1,5 @@
+SLURM_JOB_NODELIST=cpn-u24-07
+SLURM_NNODES=1
+SLURMTMPDIR=/scratch/106257
+working directory = /user/yanboguo/projects/HitTheDeck/puzzles
+NPROCS=32
