@@ -2,6 +2,8 @@ import random as rd
 import numpy as np
 import operator as op
 from functools import reduce
+import scipy.sparse.linalg as lin
+from progress import Progress
 
 ######################################################
 # start: help functions
@@ -81,33 +83,6 @@ def ncr(n, r):
 ######################################################
 
 
-# create the required vector
-reqkeys = {
-        'c': ([7, 9, 12, 45, 61, 78], 2),
-        'r': ([3, 6, 20, 34], 2),
-        'e': ([5, 11, 19], 2),
-        'l': ([1, 4, 8, 10], 1)
-        }
-reqs = {}
-for key in reqkeys:
-    vals, req = reqkeys[key]
-    for val in vals:
-        reqs[key, val] = req
-
-# vector probabilities
-allkeys = {}
-allkeys['c'] = list(range(1, 81))
-allkeys['r'] = list(range(1, 41))
-allkeys['e'] = list(range(1, 21))
-allkeys['l'] = list(range(1, 11))
-prob_c = {'c': 0.752, 'r': 0.2, 'e': 0.04, 'l': 0.008}
-prob_r = {'c': 0, 'r': 0.76, 'e': 0.2, 'l': 0.04}
-prob_vec_c = {}
-prob_vec_r = {}
-for key in allkeys:
-    for idx in allkeys[key]:
-        prob_vec_c[key, idx] = prob_c[key] / len(allkeys[key])
-        prob_vec_r[key, idx] = prob_r[key] / len(allkeys[key])
 
 
 # convert the list into a vector
@@ -183,11 +158,16 @@ def state_mod(vec, reqs):
 # generate all the states and transition probabilities
 def markov_chain_gen(reqs, prob_vec_c, prob_vec_r):
     v0 = tuple([0] * len(reqs))
-    states = set([v0, 'done'])
+    states = set([])
     new_states = [v0]
     old_states = []
     one_step_vecs = vecprob_combined(reqs, prob_vec_c, prob_vec_r)
     trans_prob = {}
+    iters = 1
+    for key in reqs:
+        iters *= reqs[key] + 1
+    # print(iters)
+    prog = Progress(total_iter=iters)
     while len(new_states) > 0:
         s0 = new_states.pop(0)
         old_states.append(s0)
@@ -207,28 +187,12 @@ def markov_chain_gen(reqs, prob_vec_c, prob_vec_r):
                 if s1 not in old_states and s1 not in new_states:
                     new_states.append(s1)
                 # update all states
+                oldlen = len(states)
                 states.add(s1)
+                newlen = len(states)
+                if newlen > oldlen:
+                    prog.count()
     return states, trans_prob
-
-
-    # solve for pi_i
-    #a = []
-    #for j in states:
-    #    row = []
-    #    for i in states:
-    #        if i == j:
-    #            row.append(1 - trans_prob[i, i])
-    #        else:
-    #            if (i, j) in trans_prob:
-    #                row.append(-1.0 * trans_prob[i, j])
-    #            else:
-    #                row.append(0.0)
-    #    a.append(row.copy())
-    #a.append([1.0] * len(states))
-    #b = [0.0] * len(states)
-    #b.append(1.0)
-    #res = np.linalg.lstsq(a,b)
-    #print('res:', res)
 
 
 # solve for the 1st passage time
@@ -255,14 +219,52 @@ def solve_psg(states, trans_prob, reqlen):
     b = [1] * len(states1)
     a = np.array(a)
     b = np.array(b)
-    x = np.linalg.solve(a,b)
+    x, info = lin.bicgstab(a, b)
+    # print(x)
+    print('solve info: ', info)
+    # x = np.linalg.solve(a,b)
     v0 = tuple([0] * reqlen)
     return x[key2idx[v0]]
             
 
+# create the required vector
+reqkeys = {
+        'c': ([7, 9, 12, 45, 61, 78], 2),
+        'r': ([3, 6, 20, 34], 2),
+        'e': ([5, 11, 19], 2),
+        'l': ([1, 4, 8, 10], 1)
+        }
+reqkeys = {
+        'c': ([7], 2),
+        'r': ([6], 1)
+        }
+reqs = {}
+for key in reqkeys:
+    vals, req = reqkeys[key]
+    for val in vals:
+        reqs[key, val] = req
+
+# vector probabilities
+allkeys = {}
+allkeys['c'] = list(range(1, 81))
+allkeys['r'] = list(range(1, 41))
+allkeys['e'] = list(range(1, 21))
+allkeys['l'] = list(range(1, 11))
+prob_c = {'c': 0.752, 'r': 0.2, 'e': 0.04, 'l': 0.008}
+prob_r = {'c': 0, 'r': 0.76, 'e': 0.2, 'l': 0.04}
+prob_vec_c = {}
+prob_vec_r = {}
+for key in allkeys:
+    for idx in allkeys[key]:
+        prob_vec_c[key, idx] = prob_c[key] / len(allkeys[key])
+        prob_vec_r[key, idx] = prob_r[key] / len(allkeys[key])
+
+# solve
+print('generating markov chain...')
 states, trans_prob = markov_chain_gen(reqs, prob_vec_c, prob_vec_r)
 # print(states)
 # print(sum(trans_prob.values()))
 # print(trans_prob)
+print('solving linear equations...')
 print(solve_psg(states, trans_prob, len(reqs)))
         
