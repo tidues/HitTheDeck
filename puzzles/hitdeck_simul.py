@@ -1,4 +1,5 @@
 import random as rd
+from progress import Progress
 
 
 def genc():
@@ -56,9 +57,11 @@ def testhand(cards, req):
 
 def exphands(req, rounds=20000):
     iters = []
+    prog = Progress(total_iter=rounds)
     for i in range(rounds):
         tmp = gethand(req)
         iters.append(tmp)
+        prog.count()
     return sum(iters)/(len(iters) * 1.0)
 
         
@@ -67,6 +70,12 @@ reqkeys = {
         'r': ([3, 6, 20, 34], 2),
         'e': ([5, 11, 19], 2),
         'l': ([1, 4, 8, 10], 1)
+        }
+reqkeys = {
+        'c': ([7, 9], 2),
+        'r': ([3, 6], 1),
+        'e': ([5, 11], 1),
+        'l': ([1, 4], 1)
         }
 req = {}
 for key in reqkeys:

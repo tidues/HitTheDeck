@@ -119,6 +119,103 @@ def cartesian_term_convert(val):
 # end: help functions
 ######################################################
 
+# the class of state
+class StateType:
+    def __init__(self, type_name, total_cards, max_repetition, reqvec):
+        self.type = type_name
+        self.total_cards = total_cards
+        self.max_rep = max_repetition
+        self.reqvec = reqvec
+
+
+class State:
+    def __init__(self, state_type, state_vec):
+        self.stype = state_type
+        self.type = self.stype.type
+        self.vec = self.init_vec(state_vec)
+        if self.satisfy(self.stype.reqvec):
+            self.vec = self.init_vec(self.stype.reqvec)
+
+    def init_vec(self, vec):
+        if len(vec) != self.stype.max_rep:
+            raise Exception('error: vector length incorrect')
+        ls = list(vec)
+        last_entry = self.stype.total_cards - sum(ls)
+        ls.append(last_entry)
+        return tuple(ls)
+
+    def satisfy(self, vec):
+        vec1 = self.vec
+        if len(vec) == self.stype.max_rep:
+            vec2 = tuple(list(vec) + [0])
+        else:
+            vec2 = vec
+        res = True
+        diff = 0
+        for i in range(len(vec1)):
+            val1 = vec1[i] + diff
+            val2 = vec2[i]
+            if val1 < val2:
+                res = False
+                break
+            else:
+                diff = val1 - val2
+        return res
+
+    def __eq__(self, other):
+        if self.type != other.type:
+            return None
+        if self.vec == other.vec:
+            return True
+        else:
+            return False
+
+    def __repr__(self):
+        return self.type + str(self.vec)
+
+
+reqkeys = {
+        'c': ([7, 9, 12, 45, 61, 78], 2, 80),
+        'r': ([3, 6, 20, 34], 2, 40),
+        'e': ([5, 11, 19], 2, 20),
+        'l': ([1, 4, 8, 10], 1, 10)
+        }
+# generate all states
+def markov_states_gen(reqkeys):
+    for key in reqkeys:
+        max_rep = reqkeys[1]
+        total_cards = reqkeys[2]
+        firstval = len(reqkeys[0])
+        reqvec = [firstval]
+        for i in range(max_rep - 1):
+            reqvec.append(0)
+        reqvec = tuple(reqvec)
+        stype = StateType(key, total_cards, max_rep, reqvec)
+
+    
+
+
+
+ctype = StateType('c', 80, 2)
+s0 = State(ctype, (0,0))
+s1 = State(ctype, (5,0))
+s2 = State(ctype, (4,2))
+print(s0)
+print(s1)
+print(s2)
+v1 = (4,1)
+v2 = (4,2)
+print(s1.satisfy(v1))
+print(s1.satisfy(v2))
+
+
+# generate all states
+
+
+
+
+
+
 
 # convert the list into a vector
 # knum the number of cards
