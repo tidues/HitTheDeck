@@ -78,11 +78,44 @@ def ncr(n, r):
     denom = reduce(op.mul, range(1, r+1), 1)
     return numer / denom
 
+
+# cartesian product
+def cartesian_bi(ls1, ls2):
+    res = []
+    for val1 in ls1:
+        val1 = cartesian_term_convert(val1)
+        for val2 in ls2:
+            val2 = cartesian_term_convert(val2)
+            res.append(tuple(val1 + val2))
+    return res
+
+
+# cartesian product list of lists
+def cartesian_ls(ls2dim):
+    if len(ls2dim) == 1:
+        tmp = ls2dim[0]
+        return list(map(lambda x: tuple(cartesian_term_convert(x)), tmp))
+    else:
+        ls2 = ls2dim.pop()
+        ls1 = ls2dim.pop()
+        ls = cartesian_bi(ls1, ls2)
+        ls2dim.append(ls)
+        return cartesian_ls(ls2dim)
+
+
+# convert cartesian term
+def cartesian_term_convert(val):
+    if 'tuple' in str(type(val)):
+        res = list(val)
+        return list(val)
+    else:
+        res = [val]
+    return res
+
+
 ######################################################
 # end: help functions
 ######################################################
-
-
 
 
 # convert the list into a vector
@@ -155,70 +188,118 @@ def state_mod(vec, reqs):
     return state
 
 
-# generate all the states and transition probabilities
-def markov_chain_gen(reqs, prob_vec_c, prob_vec_r):
-    v0 = tuple([0] * len(reqs))
-    states = set([])
-    new_states = [v0]
-    old_states = []
-    one_step_vecs = vecprob_combined(reqs, prob_vec_c, prob_vec_r)
-    trans_prob = {}
-    iters = 1
-    for key in reqs:
-        iters *= reqs[key] + 1
-    # print(iters)
-    prog = Progress(total_iter=iters)
-    while len(new_states) > 0:
-        s0 = new_states.pop(0)
-        old_states.append(s0)
-        if s0 == 'done':
-            s1 = 'done'
-            trans_prob[s0, s1] = 1.0
+# generate all the states 
+def markov_states(reqs):
+    print('generating markov chain states...')
+    values = list(reqs.values())
+    ls2dim = list(map(lambda x: list(range(0, x + 1)), values))
+    states = cartesian_ls(ls2dim)
+    return states
+
+
+# idx to key
+def idx2key(idx, reqs):
+    keys = list(reqs.keys())
+    return keys[idx]
+
+
+# get probability
+def get_p(v1, v2, reqs, one_step_vecs, state_f):
+    v2_greater = True
+    total_diff = 0
+    c_diff = 0
+    diffvec = []
+    for i in range(len(v1)):
+        v2_greater = v2_greater and v2[i] >= v1[i]
+        total_diff += v2[i] - v1[i]
+        diffvec.append(v2[i] - v1[i])
+        key = idx2key(i, reqs)
+        if key[0] == 'c':
+            c_diff += v2[i] - v1[i]
+    if v1 == state_f:
+        if v1 == v2:
+            res = 1.0
         else:
-            for vec in one_step_vecs:
-                s1 = vecadd(s0, vec)
-                # first check if s1 satisfy the requirement
-                s1 = state_mod(s1, reqs)
-                if (s0, s1) not in trans_prob:
-                    trans_prob[s0, s1] = one_step_vecs[vec]
-                else:
-                    trans_prob[s0, s1] += one_step_vecs[vec]
-                # save s1 to new_states if not in the old_states
-                if s1 not in old_states and s1 not in new_states:
-                    new_states.append(s1)
-                # update all states
-                oldlen = len(states)
-                states.add(s1)
-                newlen = len(states)
-                if newlen > oldlen:
-                    prog.count()
-    return states, trans_prob
+            res = 0.0
+    elif v2_greater and total_diff <= 5 and c_diff <= 4:
+        # calc prob of diffvec
+        res = 0.0
+        for vec in one_step_vecs:
+            s1 = vecadd(v1, vec)
+            s1 = state_mod(s1, reqs)
+            if s1 == v2:
+                res += one_step_vecs[vec]
+    else:
+        res = 0.0
+    return res
+
+
+# def markov_chain_gen(reqs, prob_vec_c, prob_vec_r):
+#     v0 = tuple([0] * len(reqs))
+#     states = set([])
+#     new_states = [v0]
+#     old_states = []
+#     one_step_vecs = vecprob_combined(reqs, prob_vec_c, prob_vec_r)
+#     trans_prob = {}
+#     iters = 1
+#     for key in reqs:
+#         iters *= reqs[key] + 1
+#     # print(iters)
+#     prog = Progress(total_iter=iters)
+#     while len(new_states) > 0:
+#         s0 = new_states.pop(0)
+#         old_states.append(s0)
+#         if s0 == 'done':
+#             s1 = 'done'
+#             trans_prob[s0, s1] = 1.0
+#         else:
+#             for vec in one_step_vecs:
+#                 s1 = vecadd(s0, vec)
+#                 # first check if s1 satisfy the requirement
+#                 s1 = state_mod(s1, reqs)
+#                 if (s0, s1) not in trans_prob:
+#                     trans_prob[s0, s1] = one_step_vecs[vec]
+#                 else:
+#                     trans_prob[s0, s1] += one_step_vecs[vec]
+#                 # save s1 to new_states if not in the old_states
+#                 if s1 not in old_states and s1 not in new_states:
+#                     new_states.append(s1)
+#                 # update all states
+#                 oldlen = len(states)
+#                 states.add(s1)
+#                 newlen = len(states)
+#                 if newlen > oldlen:
+#                     prog.count()
+#     return states, trans_prob
 
 
 # solve for the 1st passage time
-def solve_psg(states, trans_prob, reqlen):
+def solve_psg(states, reqs, prob_vec_c, prob_vec_r):
+    reqlen = len(reqs)
+    one_step_vecs = vecprob_combined(reqs, prob_vec_c, prob_vec_r)
     a = []
     b = []
     idx = 0
     key2idx = {}
-    j = 'done'
+    j = states[-1]
     states1 = [s for s in states if s != j]
+    print('creating matrix...')
+    prog = Progress(total_iter=len(states1) ** 2)
     for i in states1:
         key2idx[i] = idx
         idx += 1
         row = []
         for k in states1:
             if k == i:
-                row.append(1.0 - trans_prob[i, i])
+                row.append(1.0 - get_p(i, i, reqs, one_step_vecs, j))
             else:
-                if (i, k) in trans_prob:
-                    row.append(-1.0 * trans_prob[i, k])
-                else:
-                    row.append(0.0)
+                row.append(-1.0 * get_p(i, k, reqs, one_step_vecs, j))
+            prog.count()
         a.append(row.copy())
     b = [1] * len(states1)
     a = np.array(a)
     b = np.array(b)
+    print('solving linear system...')
     x, info = lin.bicgstab(a, b)
     # print(x)
     print('solve info: ', info)
@@ -260,11 +341,7 @@ for key in allkeys:
         prob_vec_r[key, idx] = prob_r[key] / len(allkeys[key])
 
 # solve
-print('generating markov chain...')
-states, trans_prob = markov_chain_gen(reqs, prob_vec_c, prob_vec_r)
+states = markov_states(reqs)
 # print(states)
-# print(sum(trans_prob.values()))
-# print(trans_prob)
-print('solving linear equations...')
-print(solve_psg(states, trans_prob, len(reqs)))
+print(solve_psg(states, reqs, prob_vec_c, prob_vec_r))
         
